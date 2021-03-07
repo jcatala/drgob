@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"os"
 	"flag"
+	"github.com/jcatala/drgob/pkg/discord"
 )
+
+
 
 func main() {
 	const version = "0.0.1"
