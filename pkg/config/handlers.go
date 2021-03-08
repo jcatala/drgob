@@ -13,10 +13,12 @@ import (
 
 func (c *Config) help(s *discordgo.Session, m *discordgo.MessageCreate){
 	helpBanner := `Gracias por usar esta wea `+"`%s`" + `!
+
 Prefix `+"`;`"+`
+
 Command list:
-` + "`;queryrandom <subreddit name> <optional: default:new | hot | rising | controversial | top`"+`
-` + "`;qr same as queryrandom`" + `
+	` + "`;queryrandom <subreddit name> <optional: default:new | hot | rising | controversial | top`"+`
+	` + "`;qr same as queryrandom`" + `
 `
 	helpBanner = fmt.Sprintf(helpBanner, m.Author)
 	s.ChannelMessageSend(m.ChannelID,helpBanner)
@@ -28,6 +30,7 @@ Command list:
 */
 func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreate,
 	query []string) {
+	nPosts := 50
 	var err error
 	var posts []*reddit.Post
 	if len(query) >= 3{
@@ -37,21 +40,21 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 				context.Background(),
 				query[1],
 				&reddit.ListOptions{
-					Limit:  10,
+					Limit:  nPosts,
 				})
 		case "new":
 			posts,_,err = c.RedditThings.RedditClient.Subreddit.NewPosts(
 				context.Background(),
 				query[1],
 				&reddit.ListOptions{
-					Limit:  10,
+					Limit:  nPosts,
 				})
 		case "rising":
 			posts, _, err = c.RedditThings.RedditClient.Subreddit.RisingPosts(
 				context.Background(),
 				query[1],
 				&reddit.ListOptions{
-					Limit:  10,
+					Limit:  nPosts,
 				})
 		case "controversial":
 			posts, _, err = c.RedditThings.RedditClient.Subreddit.ControversialPosts(
@@ -69,7 +72,7 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 				query[1],
 				&reddit.ListPostOptions{
 					ListOptions: reddit.ListOptions{
-						Limit:  10,
+						Limit:  nPosts,
 					},
 					Time:        "month",
 				})
@@ -78,7 +81,7 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 				context.Background(),
 				query[1],
 				&reddit.ListOptions{
-					Limit:  10,
+					Limit:  nPosts,
 				})
 		}
 	} else {
@@ -86,7 +89,7 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 			context.Background(),
 			query[1],
 			&reddit.ListOptions{
-				Limit:  10,
+				Limit:  nPosts,
 			})
 	}
 	if err != nil{
@@ -94,9 +97,7 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 	}
 	// Get random post from it
 	post := posts[rand.Intn(len(posts))]
-	message := fmt.Sprintf(`%s
-%s
-%s`,post.Title, post.Body, post.URL)
+	message := fmt.Sprintf("`%s`\n%s\n%s",post.Title, post.Body, post.URL)
 	s.ChannelMessageSend(m.ChannelID, message)
 	return
 }
@@ -128,8 +129,5 @@ func (c *Config) GetRandomPost(s *discordgo.Session, m *discordgo.MessageCreate)
 		c.queryRandomPost(s, m, args)
 
 	}
-
-
-
 
 }
