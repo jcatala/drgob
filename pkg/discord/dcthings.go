@@ -7,7 +7,6 @@ import (
 type DiscordThings struct {
 	DiscordToken string
 	DiscordSession *discordgo.Session
-
 }
 
 
@@ -22,5 +21,10 @@ func NewDiscordThings(token string) (*DiscordThings, error){
 
 
 func (d *DiscordThings) TestMessage(s *discordgo.Session, m *discordgo.MessageCreate){
+	// Ignore self bots messages
+	if m.Author.ID == d.DiscordSession.State.User.ID{
+		return
+	}
 	d.DiscordSession.ChannelMessageSend(m.ChannelID, "Weapico")
 }
+
