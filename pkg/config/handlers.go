@@ -147,8 +147,7 @@ func (c *Config) GetRandomPost(s *discordgo.Session, m *discordgo.MessageCreate)
 	}
 	args := strings.Fields(content)
 	command := strings.ToLower(args[0])
-
-	fmt.Println(args)
+	
 	// Case of each command
 	switch command {
 	case ";h", ";help":
