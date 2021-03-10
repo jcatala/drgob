@@ -1,14 +1,12 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/jcatala/drgob/pkg/config"
 	"github.com/joho/godotenv"
-	"github.com/vartanbeno/go-reddit/reddit"
 	"log"
 	"os"
 	"os/signal"
@@ -54,23 +52,12 @@ func main() {
 	if err != nil{
 		log.Fatalln("Error on oppening discord thing")
 	}
-	test(config)
 	// Wait here until CTRL + C
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
 	// If signal, close everything flawlessly
+	fmt.Printf("\nExiting...\n")
 	config.DiscordThings.DiscordSession.Close()
 
-}
-
-func test(c *config.Config){
-	posts, _, err := c.RedditThings.RedditClient.Subreddit.TopPosts(context.Background(),
-		"battlestations",
-		&reddit.ListPostOptions{ListOptions: reddit.ListOptions{Limit: 5},Time: "all"})
-	if err != nil{
-		log.Fatalln(err.Error())
-	}
-	fmt.Println("Received posts:")
-	fmt.Println(posts[0].Permalink)
 }

@@ -37,7 +37,7 @@ func (c *Config)ReadOsVariables() (e error){
 	}
 	if c.Verbose{
 		fmt.Printf(`Creating new Discord object with
-Token: %s`, c.DiscordThings.DiscordToken)
+Token: %s\n`, c.DiscordThings.DiscordToken)
 	}
 	id := os.Getenv("reddit_id")
 	username := os.Getenv("reddit_username")

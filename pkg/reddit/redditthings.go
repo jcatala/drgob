@@ -28,7 +28,8 @@ Creating new reddit credential object with:
 ID: %s,
 Secret: %s
 Username: %s
-Password: ****`, cred.ID, cred.Secret, cred.Username)
+Password: ****
+`, cred.ID, cred.Secret, cred.Username)
 	}
 	// Create the client who's responsible to talk with the api
 	client, err := reddit.NewClient(*r.RedditCredentials)
