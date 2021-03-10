@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/vartanbeno/go-reddit/reddit"
@@ -30,27 +31,33 @@ Command list:
 */
 
 func (c *Config) checkIfSubredditExists(s string)(error){
-	_,_,err := reddit.DefaultClient().Subreddit.Get(context.Background(), s)
-	if err != nil{
+	sub,res,err := reddit.DefaultClient().Subreddit.Get(context.Background(), s)
+	if c.Verbose{
+		fmt.Println(res.StatusCode)
+	}
+	// If error from GET or statusCode not found or sub == nil (which is returned from a not-existed subreddit)
+	if err != nil || res.StatusCode == 404 || sub == nil{
+		err = errors.New("Reddit does not exists")
 		return err
 	}
-	return err
+	return nil
 }
 
-func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreate,
-	query []string) {
+func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreate, query []string) {
 	nPosts := 50
 	var err error
 	var posts []*reddit.Post
 	// The check if there's more than 2 arguments came before this function
 	// So now, first we need to check if the subreddit exists
+	if c.Verbose {
+		fmt.Printf("Checking the following query: %s\n", query)
+	}
 	err = c.checkIfSubredditExists(query[1])
 	if err != nil{
-		message := fmt.Sprintf("`%s-kun`, el subrreddit %s no existe, gil ", m.Author, query[1])
+		message := fmt.Sprintf("`%s-kun`, el sub-reddit `%s` no existe, gil ", m.Author, query[1])
 		s.ChannelMessageSend(m.ChannelID, message)
 		return
 	}
-	fmt.Printf("Normal query variable %s", query)
 	if len(query) >= 3{
 		switch strings.ToLower(query[2]) {
 		case "hot":
