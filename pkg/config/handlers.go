@@ -18,7 +18,7 @@ func (c *Config) help(s *discordgo.Session, m *discordgo.MessageCreate){
 Prefix `+"`;`"+`
 
 Command list:
-	` + "`;queryrandom <subreddit name> <optional: default:new | hot | rising | controversial | top`"+`
+	` + "`;queryrandom <subreddit name> <optional: default:new | hot | rising | controversial | top>`"+`
 	` + "`;qr same as queryrandom`" + `
 `
 	helpBanner = fmt.Sprintf(helpBanner, m.Author)
@@ -147,13 +147,28 @@ func (c *Config) GetRandomPost(s *discordgo.Session, m *discordgo.MessageCreate)
 	}
 	args := strings.Fields(content)
 	command := strings.ToLower(args[0])
-	
+	if c.Verbose {
+		fmt.Printf("Prefix received: %s\n", string(command[0]) )
+	}
+	// If the the prefix does not correspond, quit
+	if strings.Compare(string(command[0]), c.Prefix) != 0{
+		if c.Verbose{
+			fmt.Printf("Bad prefix!\nReceived: %s\nExpected: %s\n", command[0], c.Prefix)
+		}
+		return
+	}
+
+	// Delete the prefix for the incoming command
+	command = strings.Replace(command, ";","", -1 )
+	if c.Verbose {
+		fmt.Printf("Received command: %s\n", command)
+	}
 	// Case of each command
 	switch command {
-	case ";h", ";help":
+	case "h", "help":
 		go c.help(s, m)
 
-	case ";qr", ";queryrandom":
+	case "qr", "queryrandom":
 		if len(args) >= 2{
 			go c.queryRandomPost(s, m, args)
 		}
