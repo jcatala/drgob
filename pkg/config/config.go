@@ -15,11 +15,13 @@ type Config struct{
 	Prefix string	//	String of the prefix to use
 	DiscordThings *discord.DiscordThings	// This will host the discord things, including the bot structure
 	RedditThings *reddit.RedditThings		// This will save the reddit things
+	Nposts int		//	The number of posts to query on reddit api
 }
 
-func NewConfig(v bool) (*Config) {
+func NewConfig(v bool, n int) (*Config) {
 	c := new(Config)
 	c.Verbose = v
+	c.Nposts = n
 	return c
 }
 

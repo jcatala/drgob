@@ -44,7 +44,6 @@ func (c *Config) checkIfSubredditExists(s string)(error){
 }
 
 func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreate, query []string) {
-	nPosts := 50
 	var err error
 	var posts []*reddit.Post
 	// The check if there's more than 2 arguments came before this function
@@ -65,21 +64,21 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 				context.Background(),
 				query[1],
 				&reddit.ListOptions{
-					Limit:  nPosts,
+					Limit:  c.Nposts,
 				})
 		case "new":
 			posts,_,err = c.RedditThings.RedditClient.Subreddit.NewPosts(
 				context.Background(),
 				query[1],
 				&reddit.ListOptions{
-					Limit:  nPosts,
+					Limit:  c.Nposts,
 				})
 		case "rising":
 			posts, _, err = c.RedditThings.RedditClient.Subreddit.RisingPosts(
 				context.Background(),
 				query[1],
 				&reddit.ListOptions{
-					Limit:  nPosts,
+					Limit:  c.Nposts,
 				})
 		case "controversial":
 			posts, _, err = c.RedditThings.RedditClient.Subreddit.ControversialPosts(
@@ -97,7 +96,7 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 				query[1],
 				&reddit.ListPostOptions{
 					ListOptions: reddit.ListOptions{
-						Limit:  nPosts,
+						Limit:  c.Nposts,
 					},
 					Time:        "month",
 				})
@@ -106,7 +105,7 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 				context.Background(),
 				query[1],
 				&reddit.ListOptions{
-					Limit:  nPosts,
+					Limit:  c.Nposts,
 				})
 		}
 	} else {
@@ -114,7 +113,7 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 			context.Background(),
 			query[1],
 			&reddit.ListOptions{
-				Limit:  nPosts,
+				Limit:  c.Nposts,
 			})
 	}
 	if err != nil{
@@ -127,6 +126,9 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 	}
 	post := posts[rand.Intn(len(posts))]
 	message := fmt.Sprintf("`%s`\n%s\n%s",post.Title, post.Body, post.URL)
+	if c.Verbose{
+		fmt.Printf("Sending the following message to the channel %s\n", message)
+	}
 	s.ChannelMessageSend(m.ChannelID, message)
 	return
 }

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"github.com/jcatala/drgob/pkg/banner"
 	"github.com/jcatala/drgob/pkg/config"
 	"github.com/joho/godotenv"
 	"log"
@@ -26,16 +27,24 @@ func getDcToken() (response string, e error){
 
 func main() {
 	const version = "0.0.1"
-
+	flag.Usage = func() {
+		banner.Banner(version)
+		flag.PrintDefaults()
+	}
 	// The items inside flags are just pointers
 	// First, parse all the args that are passed to the bot
 	verbose := flag.Bool("verbose", false, "To be verbose")
 	prefix := flag.String("prefix", ";", "Prefix to use, default: ;")
+	npost := flag.Int("npost",50, "Number of posts to ask on reddit-api")
 	flag.Parse()
 
 	// Creating a config options to push everything inside
 	//var config *config.Config
-	config := config.NewConfig(*verbose)
+	config := config.NewConfig(*verbose, *npost)
+
+	if config.Verbose{
+		banner.Banner(version)
+	}
 	// Loading environment variables, including reddit and dc tokens
 	err := config.ReadOsVariables()
 	if err != nil{
