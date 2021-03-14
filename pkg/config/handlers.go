@@ -139,12 +139,22 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 	allEmojis, err := s.GuildEmojis(m.GuildID)
 	if err != nil{
 		fmt.Println(err.Error())
+		return
 	}
 	// Select a random emoji from the current guild and react
+	// First check if the guild have custom emojis, lol
+	if len(allEmojis) < 1{
+		if c.Verbose{
+			fmt.Println("Error, the guild have no customs emoji's")
+		}
+		return
+	}
+
 	randEmoji := allEmojis[rand.Intn(len(allEmojis))]
 	err = s.MessageReactionAdd(mes.ChannelID, mes.ID, randEmoji.APIName() )
 	if err != nil{
 		fmt.Println(err.Error())
+		return
 	}
 
 	return
