@@ -34,7 +34,7 @@ func main() {
 	// The items inside flags are just pointers
 	// First, parse all the args that are passed to the bot
 	verbose := flag.Bool("verbose", false, "To be verbose")
-	prefix := flag.String("prefix", ";", "Prefix to use, default: ;")
+	prefix := flag.String("prefix", ";", "Prefix to use")
 	npost := flag.Int("npost",50, "Number of posts to ask on reddit-api")
 	flag.Parse()
 

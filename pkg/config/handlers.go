@@ -129,7 +129,24 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 	if c.Verbose{
 		fmt.Printf("Sending the following message to the channel %s\n", message)
 	}
-	s.ChannelMessageSend(m.ChannelID, message)
+
+	// Catch the new message
+	mes ,err := s.ChannelMessageSend(m.ChannelID, message)
+	if err != nil{
+		return
+	}
+	// Get all the emojis of the current guild
+	allEmojis, err := s.GuildEmojis(m.GuildID)
+	if err != nil{
+		fmt.Println(err.Error())
+	}
+	// Select a random emoji from the current guild and react
+	randEmoji := allEmojis[rand.Intn(len(allEmojis))]
+	err = s.MessageReactionAdd(mes.ChannelID, mes.ID, randEmoji.APIName() )
+	if err != nil{
+		fmt.Println(err.Error())
+	}
+
 	return
 }
 
