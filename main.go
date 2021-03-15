@@ -36,11 +36,12 @@ func main() {
 	verbose := flag.Bool("verbose", false, "To be verbose")
 	prefix := flag.String("prefix", ";", "Prefix to use")
 	npost := flag.Int("npost",50, "Number of posts to ask on reddit-api")
+	nsr := flag.Int("nsr", 20, "Number of subreddits to explore")
 	flag.Parse()
 
 	// Creating a config options to push everything inside
 	//var config *config.Config
-	config := config.NewConfig(*verbose, *npost)
+	config := config.NewConfig(*verbose, *npost, *nsr)
 
 	if config.Verbose{
 		banner.Banner(version)
@@ -55,7 +56,7 @@ func main() {
 	config.Prefix = *prefix
 	// Now, we have the config created with the discord object correctly created, we now need to create a handler
 	//config.DiscordThings.DiscordSession.AddHandler(config.DiscordThings.TestMessage)
-	config.DiscordThings.DiscordSession.AddHandler(config.GetRandomPost)
+	config.DiscordThings.DiscordSession.AddHandler(config.Core)
 	config.DiscordThings.DiscordSession.Identify.Intents = discordgo.IntentsGuildMessages
 	err = config.DiscordThings.DiscordSession.Open()
 	if err != nil{

@@ -11,18 +11,28 @@ import (
 )
 
 
+var helpBanner string = "" +
+	"Gracias por usar esta wea `%s` !\n" +	// Name of the requester
+	"Prefix `%s`\n" + // Prefix on config structure
+	"Command list:\n" +
+	"\t\t`;queryrandom <subreddit name> <optional: default:new | hot | rising | controversial | top>`\n" +
+	"\t\t`;qr <same as queryrandom>`\n" +
+	"\t\t`;explore <query to search for subreddits>`\n" +
+	"\t\t`;ex <same as explore>`\n" +
+	"\t\t`;x <same as ex>`\n\n\n" +
+	"Give a star or a coffe here: `%s`\n"	//	github url :D
+
+
+
+
 
 func (c *Config) help(s *discordgo.Session, m *discordgo.MessageCreate){
-	helpBanner := `Gracias por usar esta wea `+"`%s`" + `!
 
-Prefix `+"`;`"+`
-
-Command list:
-	` + "`;queryrandom <subreddit name> <optional: default:new | hot | rising | controversial | top>`"+`
-	` + "`;qr same as queryrandom`" + `
-`
-	helpBanner = fmt.Sprintf(helpBanner, m.Author)
-	s.ChannelMessageSend(m.ChannelID,helpBanner)
+	hb := fmt.Sprintf(helpBanner, m.Author, c.Prefix, "github.com/jcatala/drgob")
+	if c.Verbose{
+		fmt.Printf("Sending help banner!\n%s", hb)
+	}
+	s.ChannelMessageSend(m.ChannelID,hb)
 }
 
 
@@ -160,7 +170,37 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 	return
 }
 
-func (c *Config) GetRandomPost(s *discordgo.Session, m *discordgo.MessageCreate){
+func (c *Config) explore(s *discordgo.Session, m *discordgo.MessageCreate, arg []string){
+
+	query := strings.Join(arg, " ")
+	if c.Verbose{
+		fmt.Printf("Starting to explore subrredit on %s", query)
+	}
+	sr, _, err := c.RedditThings.RedditClient.Subreddit.Search(context.Background(),query, &reddit.ListSubredditOptions{
+		ListOptions: reddit.ListOptions{
+			Limit:  c.Nsr,
+		},
+		Sort:        "activity",
+	})
+	if err != nil{
+		fmt.Printf("Error geting subreddits for this query, %s", err.Error())
+		return
+	}
+	// Start building the result, we need to add the backquote to end the markdown mode
+	result := fmt.Sprintf("Result for search %s:\n\n```",query)
+	for i, s := range sr {
+		result = fmt.Sprintf("%s\t[ %d ] %s\n", result, i+1, s.Name )
+	}
+	result = fmt.Sprintf("%s\n```", result)
+
+	if c.Verbose{
+		fmt.Printf("Got the following subreddits: %s", result)
+	}
+	s.ChannelMessageSend(m.ChannelID, result)
+	return
+}
+
+func (c *Config) Core(s *discordgo.Session, m *discordgo.MessageCreate){
 	// Ignore self bots messages
 	if m.Author.ID == c.DiscordThings.DiscordSession.State.User.ID{
 		return
@@ -200,6 +240,10 @@ func (c *Config) GetRandomPost(s *discordgo.Session, m *discordgo.MessageCreate)
 	case "qr", "queryrandom":
 		if len(args) >= 2{
 			go c.queryRandomPost(s, m, args)
+		}
+	case "explore", "ex", "x":
+		if len(args) >= 2{
+			go c.explore(s, m, args[1:])
 		}
 	}
 }
