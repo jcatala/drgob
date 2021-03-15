@@ -98,7 +98,7 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 					ListOptions: reddit.ListOptions{
 						Limit:  10,
 					},
-					Time:        "month",
+					Time:        "week",
 				})
 		case "top":
 			posts, _, err = c.RedditThings.RedditClient.Subreddit.TopPosts(
@@ -108,7 +108,7 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 					ListOptions: reddit.ListOptions{
 						Limit:  c.Nposts,
 					},
-					Time:        "month",
+					Time:        "week",
 				})
 		default:
 			posts,_,err = c.RedditThings.RedditClient.Subreddit.NewPosts(
