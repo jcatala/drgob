@@ -12,7 +12,10 @@ This is a `discord bot` that will respond with `posts` from an arbitrary subredd
 ;help Display the help message
 ;h (same as help)
 ;queryrandom <subreddit name> <optional: default:new | hot | rising | controversial | top>
-;qr (same as queryrandom)
+;qr <same as queryrandom>
+;explore <query to search for subreddits>
+;ex <same as explore>
+;x <same as ex>
 ```
 
 
