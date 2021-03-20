@@ -9,9 +9,11 @@ import (
 	"github.com/jcatala/drgob/pkg/config"
 	"github.com/joho/godotenv"
 	"log"
+	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 
@@ -26,7 +28,7 @@ func getDcToken() (response string, e error){
 
 
 func main() {
-	const version = "0.0.1"
+	const version = "0.0.2"
 	flag.Usage = func() {
 		banner.Banner(version)
 		flag.PrintDefaults()
@@ -41,6 +43,8 @@ func main() {
 
 	// Creating a config options to push everything inside
 	//var config *config.Config
+	// Initialize the seed
+	rand.Seed(time.Now().UTC().UnixNano())
 	config := config.NewConfig(*verbose, *npost, *nsr)
 
 	if config.Verbose{

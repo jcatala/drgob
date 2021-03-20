@@ -11,6 +11,8 @@ import (
 )
 
 
+
+
 var helpBanner string = "" +
 	"Gracias por usar esta wea `%s` !\n" +	// Name of the requester
 	"Prefix `%s`\n" + // Prefix on config structure
@@ -53,7 +55,17 @@ func (c *Config) checkIfSubredditExists(s string)(error){
 	return nil
 }
 
-func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreate, query []string) {
+
+
+
+/*
+*	TODO
+*	Do the following functions to only return an slice of posts,
+*	Do the logic of sorting, randomize and shit outside this function
+*	Make a function to make the logic behind the auto-reaction on another functions
+*/
+// func (c *Config) getPosts(s *discordgo.Session, m *discordgo.MessageCreate, query []string) {
+func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreate, query []string)([]*reddit.Post, error) {
 	var err error
 	var posts []*reddit.Post
 	// The check if there's more than 2 arguments came before this function
@@ -62,10 +74,11 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 		fmt.Printf("Checking the following query: %s\n", query)
 	}
 	err = c.checkIfSubredditExists(query[1])
+	// Just return if the subreddit does not exists
 	if err != nil{
 		message := fmt.Sprintf("`%s-kun`, el sub-reddit `%s` no existe, gil ", m.Author, query[1])
 		s.ChannelMessageSend(m.ChannelID, message)
-		return
+		return nil, err
 	}
 	if len(query) >= 3{
 		switch strings.ToLower(query[2]) {
@@ -126,14 +139,19 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 				Limit:  c.Nposts,
 			})
 	}
+	// Any kind of error of the return value of the reddit api
 	if err != nil{
-		return
+		return nil, err
 	}
+
 	// Get random post from it
 	if len(posts) < 1 {
 		// Dunno why sometimes the API does return zero posts, just in case, lol
-		return
+		noPosts := errors.New("No post returned")
+		return	nil, noPosts
 	}
+	return posts, nil
+	/*
 	post := posts[rand.Intn(len(posts))]
 	message := fmt.Sprintf("`%s`\n%s\n%s",post.Title, post.Body, post.URL)
 	if c.Verbose{
@@ -168,7 +186,117 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 	}
 
 	return
+	*/
 }
+
+func (c *Config) toggleReaction(s* discordgo.Session, m *discordgo.MessageCreate, mes *discordgo.Message, )(error){
+	// Get all the emojis from the current guild
+	allEmojis, err := s.GuildEmojis(m.GuildID)
+	if err != nil{
+		return err
+	}
+	// Check if the current guild have a custom emoji
+	if len(allEmojis) < 1 {
+		if c.Verbose{
+			fmt.Println("Error, the guild have no customs emoji's")
+		}
+		// Randomize the message of "create a emoji pls"
+		// Pretty fucking bad decision tbh.
+		err = errors.New("No emoji available")
+		if rand.Intn(100) == 50{
+			err = errors.New("No emoji available, send")
+		}
+		return err
+	}
+	// Select a random emoji
+	randEmoji := allEmojis[rand.Intn(len(allEmojis))]
+
+	err = s.MessageReactionAdd(mes.ChannelID, mes.ID, randEmoji.APIName())
+	if err != nil{
+		if c.Verbose{
+			fmt.Println(err.Error())
+		}
+	}
+	return err
+}
+
+/*
+*	Use the slice of posts to search trhough the only media things
+*	TODO: Investigate which things are useful to render on discord:
+*	jpg, jpeg, png, gif, svg, gfycat, imgur
+*	From now, we're just doing basic fucking greping here,
+*	Need to search another method to discrimante between media and non-media post
+*/
+
+func (c *Config) findInside(post *reddit.Post)(bool){
+
+	for i,word := range c.oracle{
+		if c.Verbose{
+			fmt.Printf("[ %d ] Looking for word: %s inside:\nBody: %s\nURL:%s\nPermalink: %s\n\n", i, word, post.Body,post.URL, post.Permalink)
+		}
+		if strings.Contains(post.Body, word) || strings.Contains(post.URL, word) {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *Config) queryMedia(s *discordgo.Session, m *discordgo.MessageCreate, query []string){
+	posts, err := c.queryRandomPost(s, m, query)
+	if err != nil{
+		return
+	}
+	// Shuffle the posts in order to iterate over it and grepping for our target
+	// This is a stupid fucking implementation, lol.
+	rand.Shuffle(len(posts), func(i, j int) { posts[i], posts[j] = posts[j], posts[i] })
+	// After the shuffle, iterate over it and look up for our oracle of "media things"
+	for _,p := range posts{
+		// If we found our oracle, send the message and end the routine
+		if c.findInside(p){
+			message := fmt.Sprintf("`%s`\n%s\n%s",p.Title, p.Body, p.URL)
+			mes, err := s.ChannelMessageSend(m.ChannelID, message)
+			if err != nil{
+				return
+			}
+			if c.Verbose{
+				fmt.Printf("Sended the following message: %s", mes.Content)
+			}
+			_ = c.toggleReaction(s,m,mes)
+			return
+		}
+	}
+	return
+}
+
+func (c *Config) queryAll(s *discordgo.Session, m *discordgo.MessageCreate, query []string){
+	posts, err := c.queryRandomPost(s, m, query);
+	if err != nil{
+		return
+	}
+	post := posts[rand.Intn(len(posts))]
+	message := fmt.Sprintf("`%s`\n%s\n%s",post.Title, post.Body, post.URL)
+	if c.Verbose{
+		fmt.Printf("Sending the following message to the channel %s\n", message)
+	}
+
+	// Catch the message to make the reaction
+
+	// Catch the new message
+	mes ,err := s.ChannelMessageSend(m.ChannelID, message)
+	if err != nil{
+		return
+	}
+
+	// With the message sended and created, toggle a reaction
+	err = c.toggleReaction(s, m, mes)
+	if err != nil{
+		if strings.Contains(err.Error(), "send"){
+			s.ChannelMessageSend(m.ChannelID,"Please, create a custom emoji, 8=D")
+		}
+	}
+
+}
+
 
 func (c *Config) explore(s *discordgo.Session, m *discordgo.MessageCreate, arg []string){
 
@@ -239,7 +367,12 @@ func (c *Config) Core(s *discordgo.Session, m *discordgo.MessageCreate){
 
 	case "qr", "queryrandom":
 		if len(args) >= 2{
-			go c.queryRandomPost(s, m, args)
+			//go c.queryRandomPost(s, m, args)
+			go c.queryAll(s, m, args)
+		}
+	case "qrm", "querymedia","qm":
+		if len(args) >=2{
+			go c.queryMedia(s, m, args)
 		}
 	case "explore", "ex", "x":
 		if len(args) >= 2{

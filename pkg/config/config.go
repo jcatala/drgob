@@ -17,6 +17,7 @@ type Config struct{
 	RedditThings *reddit.RedditThings		// This will save the reddit things
 	Nposts int		//	The number of posts to query on reddit api
 	Nsr int			// Number of subreddits to explore (do not be so much please)
+	oracle []string	// Slice of strings of each of the values that we're grepping on
 }
 
 func NewConfig(v bool, n int, nsr int) (*Config) {
@@ -24,6 +25,9 @@ func NewConfig(v bool, n int, nsr int) (*Config) {
 	c.Verbose = v
 	c.Nposts = n
 	c.Nsr = nsr
+	c.oracle = append(c.oracle, ".jpg",".jpeg",".png",".gif",
+		"gfycat","redgif","gif","img","img",".svg")
+
 	return c
 }
 
