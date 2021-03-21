@@ -26,7 +26,7 @@ func NewConfig(v bool, n int, nsr int) (*Config) {
 	c.Nposts = n
 	c.Nsr = nsr
 	c.oracle = append(c.oracle, ".jpg",".jpeg",".png",".gif",
-		"gfycat","redgif","gif","img","img",".svg")
+		"gfycat","redgif","gif","img","img",".svg","gallery")
 
 	return c
 }

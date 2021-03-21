@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/anaskhan96/soup"
 	"github.com/bwmarrin/discordgo"
 	"github.com/vartanbeno/go-reddit/reddit"
 	"math/rand"
@@ -16,12 +17,17 @@ import (
 var helpBanner string = "" +
 	"Gracias por usar esta wea `%s` !\n" +	// Name of the requester
 	"Prefix `%s`\n" + // Prefix on config structure
-	"Command list:\n" +
+	"Command list:\n\n" +
 	"\t\t`;queryrandom <subreddit name> <optional: default:new | hot | rising | controversial | top>`\n" +
 	"\t\t`;qr <same as queryrandom>`\n" +
 	"\t\t`;explore <query to search for subreddits>`\n" +
 	"\t\t`;ex <same as explore>`\n" +
-	"\t\t`;x <same as ex>`\n\n\n" +
+	"\t\t`;x <same as ex>`\n" +
+	"\t\t`;queryrandommedia <subreddit name> <optional: default:new | hot | rising | controversial | top>  `\n" +
+	"\t\t`;querymedia <same as queryrandommedia>`\n" +
+	"\t\t`;qrm <same as querymedia>`\n" +
+	"\t\t`;qm <same as qrm>`\n\n\n" +
+
 	"Give a star or a coffe here: `%s`\n"	//	github url :D
 
 
@@ -151,42 +157,6 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 		return	nil, noPosts
 	}
 	return posts, nil
-	/*
-	post := posts[rand.Intn(len(posts))]
-	message := fmt.Sprintf("`%s`\n%s\n%s",post.Title, post.Body, post.URL)
-	if c.Verbose{
-		fmt.Printf("Sending the following message to the channel %s\n", message)
-	}
-
-	// Catch the new message
-	mes ,err := s.ChannelMessageSend(m.ChannelID, message)
-	if err != nil{
-		return
-	}
-	// Get all the emojis of the current guild
-	allEmojis, err := s.GuildEmojis(m.GuildID)
-	if err != nil{
-		fmt.Println(err.Error())
-		return
-	}
-	// Select a random emoji from the current guild and react
-	// First check if the guild have custom emojis, lol
-	if len(allEmojis) < 1{
-		if c.Verbose{
-			fmt.Println("Error, the guild have no customs emoji's")
-		}
-		return
-	}
-
-	randEmoji := allEmojis[rand.Intn(len(allEmojis))]
-	err = s.MessageReactionAdd(mes.ChannelID, mes.ID, randEmoji.APIName() )
-	if err != nil{
-		fmt.Println(err.Error())
-		return
-	}
-
-	return
-	*/
 }
 
 func (c *Config) toggleReaction(s* discordgo.Session, m *discordgo.MessageCreate, mes *discordgo.Message, )(error){
@@ -225,7 +195,7 @@ func (c *Config) toggleReaction(s* discordgo.Session, m *discordgo.MessageCreate
 *	TODO: Investigate which things are useful to render on discord:
 *	jpg, jpeg, png, gif, svg, gfycat, imgur
 *	From now, we're just doing basic fucking greping here,
-*	Need to search another method to discrimante between media and non-media post
+*	Need to search another method to discriminate between media and non-media post
 */
 
 func (c *Config) findInside(post *reddit.Post)(bool){
@@ -241,6 +211,34 @@ func (c *Config) findInside(post *reddit.Post)(bool){
 	return false
 }
 
+func (c *Config)parseGallery(url string)([]string, error) {
+	soup.Header("User-Agent","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36")
+	resp, err := soup.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	doc := soup.HTMLParse(resp)
+	links := doc.FindAll("a")
+	if c.Verbose{
+		fmt.Println(links)
+	}
+	images := []string{}
+	for _, link := range links {
+		// The URL of each gallery is just a preview.redd.it
+		if c.Verbose {
+			fmt.Printf("[ Gallery ] Link: %s\n", link.Attrs()["href"])
+		}
+		if strings.Contains(link.Attrs()["href"], "preview"){
+			images = append(images,link.Attrs()["href"] )
+		}
+	}
+	if c.Verbose{
+		fmt.Printf("[ Gallery ] Got the following slice: %s", images)
+	}
+	return images, nil
+}
+
+
 func (c *Config) queryMedia(s *discordgo.Session, m *discordgo.MessageCreate, query []string){
 	posts, err := c.queryRandomPost(s, m, query)
 	if err != nil{
@@ -253,7 +251,22 @@ func (c *Config) queryMedia(s *discordgo.Session, m *discordgo.MessageCreate, qu
 	for _,p := range posts{
 		// If we found our oracle, send the message and end the routine
 		if c.findInside(p){
-			message := fmt.Sprintf("`%s`\n%s\n%s",p.Title, p.Body, p.URL)
+			message := fmt.Sprintf("`%s`\n%s\n%s\n",p.Title, p.Body, p.URL)
+			// If there's a gallery inside, modify the message to have all the urls of the respective gallery
+			// TODO: Do this things in another way, since we're double checking that its a gallery, lol
+			if strings.Contains(p.URL, "gallery"){
+				images, err := c.parseGallery(p.URL)
+				if err != nil{
+					fmt.Println(err.Error())
+					return
+				}
+				for i,url := range images{
+					if c.Verbose{
+						fmt.Printf("[ Gallery - %d ] URL: %s\n", i, url)
+					}
+					message = fmt.Sprintf("%s\n%s\n", message,url)
+				}
+			}
 			mes, err := s.ChannelMessageSend(m.ChannelID, message)
 			if err != nil{
 				return
@@ -370,7 +383,7 @@ func (c *Config) Core(s *discordgo.Session, m *discordgo.MessageCreate){
 			//go c.queryRandomPost(s, m, args)
 			go c.queryAll(s, m, args)
 		}
-	case "qrm", "querymedia","qm":
+	case "qrm", "queryrandommedia","querymedia","qm":
 		if len(args) >=2{
 			go c.queryMedia(s, m, args)
 		}

@@ -36,3 +36,5 @@ Password: ****
 	r.RedditClient = client	// Pass the client to our object
 	return r,err
 }
+
+
