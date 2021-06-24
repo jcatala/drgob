@@ -49,7 +49,7 @@ func (c *Config) help(s *discordgo.Session, m *discordgo.MessageCreate){
 */
 
 func (c *Config) checkIfSubredditExists(s string)(error){
-	sub,res,err := reddit.DefaultClient().Subreddit.Get(context.Background(), s)
+	sub,res,err := c.RedditThings.RedditClient.Subreddit.Get(context.Background(), s)
 	if c.Verbose{
 		fmt.Println(res.StatusCode)
 	}
@@ -73,7 +73,7 @@ func (c *Config) checkIfSubredditExists(s string)(error){
 // func (c *Config) getPosts(s *discordgo.Session, m *discordgo.MessageCreate, query []string) {
 func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreate, query []string)([]*reddit.Post, error) {
 	var err error
-	var posts []*reddit.Post
+	var posts *reddit.Posts
 	// The check if there's more than 2 arguments came before this function
 	// So now, first we need to check if the subreddit exists
 	if c.Verbose {
@@ -82,6 +82,9 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 	err = c.checkIfSubredditExists(query[1])
 	// Just return if the subreddit does not exists
 	if err != nil{
+		if c.Verbose{
+			fmt.Printf("Error: %s", err.Error())
+		}
 		message := fmt.Sprintf("`%s-kun`, el sub-reddit `%s` no existe, gil ", m.Author, query[1])
 		s.ChannelMessageSend(m.ChannelID, message)
 		return nil, err
@@ -317,6 +320,7 @@ func (c *Config) explore(s *discordgo.Session, m *discordgo.MessageCreate, arg [
 	if c.Verbose{
 		fmt.Printf("Starting to explore subrredit on %s", query)
 	}
+
 	sr, _, err := c.RedditThings.RedditClient.Subreddit.Search(context.Background(),query, &reddit.ListSubredditOptions{
 		ListOptions: reddit.ListOptions{
 			Limit:  c.Nsr,
@@ -329,6 +333,7 @@ func (c *Config) explore(s *discordgo.Session, m *discordgo.MessageCreate, arg [
 	}
 	// Start building the result, we need to add the backquote to end the markdown mode
 	result := fmt.Sprintf("Result for search %s:\n\n```",query)
+
 	for i, s := range sr {
 		result = fmt.Sprintf("%s\t[ %d ] %s\n", result, i+1, s.Name )
 	}

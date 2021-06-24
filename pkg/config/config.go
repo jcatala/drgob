@@ -51,6 +51,6 @@ Token: %s\n`, c.DiscordThings.DiscordToken)
 	username := os.Getenv("reddit_username")
 	password := os.Getenv("reddit_password")
 	secret := os.Getenv("reddit_secret")
-	c.RedditThings,err = reddit.NewRedditThings(c.Verbose, id, secret, username, password)
+	c.RedditThings, err = reddit.NewRedditThings(c.Verbose, id, secret, username, password)
 	return err
 }

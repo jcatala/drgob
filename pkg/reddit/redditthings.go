@@ -3,6 +3,7 @@ package reddit
 import (
 	"fmt"
 	"github.com/vartanbeno/go-reddit/reddit"
+
 )
 
 
@@ -32,7 +33,9 @@ Password: ****
 `, cred.ID, cred.Secret, cred.Username)
 	}
 	// Create the client who's responsible to talk with the api
-	client, err := reddit.NewClient(*r.RedditCredentials)
+	//httpClient := &http.Client{Timeout: time.Second * 30}
+
+	client, err := reddit.NewClient(nil, &(*r.RedditCredentials))
 	r.RedditClient = client	// Pass the client to our object
 	return r,err
 }
