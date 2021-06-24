@@ -154,12 +154,12 @@ func (c *Config) queryRandomPost(s *discordgo.Session, m *discordgo.MessageCreat
 	}
 
 	// Get random post from it
-	if len(posts) < 1 {
+	if len(posts.Posts) < 1 {
 		// Dunno why sometimes the API does return zero posts, just in case, lol
 		noPosts := errors.New("No post returned")
 		return	nil, noPosts
 	}
-	return posts, nil
+	return posts.Posts, nil
 }
 
 func (c *Config) toggleReaction(s* discordgo.Session, m *discordgo.MessageCreate, mes *discordgo.Message, )(error){
@@ -334,7 +334,7 @@ func (c *Config) explore(s *discordgo.Session, m *discordgo.MessageCreate, arg [
 	// Start building the result, we need to add the backquote to end the markdown mode
 	result := fmt.Sprintf("Result for search %s:\n\n```",query)
 
-	for i, s := range sr {
+	for i, s := range sr.Subreddits {
 		result = fmt.Sprintf("%s\t[ %d ] %s\n", result, i+1, s.Name )
 	}
 	result = fmt.Sprintf("%s\n```", result)

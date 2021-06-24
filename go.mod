@@ -7,5 +7,5 @@ require (
 	github.com/bwmarrin/discordgo v0.23.0
 	github.com/dimiro1/banner v1.1.0
 	github.com/joho/godotenv v1.3.0
-	github.com/vartanbeno/go-reddit/v2 v2.0.1
+	github.com/vartanbeno/go-reddit v1.0.0
 )
